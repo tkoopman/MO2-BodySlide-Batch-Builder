@@ -1,0 +1,27 @@
+{
+    "Name": "BodySlide Batch Builder",
+    "Author": "GoriRed",
+    "Description": "This plugin will run BodySlide for up to 5 different groups, presets, and output mods.",
+    "DocsUrl": "https://github.com/tkoopman/MO2-BodySlide-Batch-Builder",
+    "NexusUrl": "https://www.nexusmods.com/skyrimspecialedition/mods/59869",
+    "GithubUrl": "https://github.com/tkoopman/MO2-BodySlide-Batch-Builder",
+    "Versions": [
+        {
+            "Version": "1.0.0",
+            "Released": "2025-03-20",
+            "MinSupport": "2.4.2",
+            "MaxSupport": "2.4.2",
+            "MinWorking": "2.4.0",
+            "MaxWorking": "",
+            "DownloadUrl": "https://github.com/tkoopman/MO2-BodySlide-Batch-Builder/archive/refs/tags/v1.0.0.zip",
+            "PluginPath": [
+                "MO2-BodySlide-Batch-Builder-1.0.0/BodySlideBatchBuilder.py"
+            ],
+            "LocalePath": [],
+            "DataPath": [],
+            "ReleaseNotes": [
+                "Initial release"
+            ]
+        }
+    ]
+}
