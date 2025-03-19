@@ -6,7 +6,7 @@ This plugin for MO2 will run BodySlide for up to 5 different groups, presets, an
   - BodySlide Executable registered in MO2 as "BodySlide x64"
 
 ### Installation:
-  - Place this file in the MO2/plugins/ folder.
+  - Place BodySlideBatchBuilder.py in the MO2/plugins/ folder.
 
 ### Settings:
   - In MO2, go to the settings for this plugin and configure the builds you want to run.
