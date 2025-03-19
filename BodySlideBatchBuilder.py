@@ -169,6 +169,7 @@ class CleanerPlugin(mobase.IPluginTool):
         self.__parentWidget = parent
 
     def display(self) -> None:
+        self.__canceled = False
         self.__dialog = PrechecksWindow(self.__parentWidget)
 
         hasEnabled = False
