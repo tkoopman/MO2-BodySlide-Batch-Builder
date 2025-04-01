@@ -1,7 +1,7 @@
 {
   "Name": "BodySlide Batch Builder",
   "Author": "GoriRed",
-  "Description": "This plugin will run BodySlide for up to 5 different groups, presets, and output mods.",
+  "Description": "Run BodySlide build for each configured build that includes different Groups, Preset, Output Mod combinations.",
   "DocsUrl": "https://github.com/tkoopman/MO2-BodySlide-Batch-Builder",
   "NexusUrl": "https://www.nexusmods.com/site/mods/1231",
   "GithubUrl": "https://github.com/tkoopman/MO2-BodySlide-Batch-Builder",
@@ -21,6 +21,24 @@
       "DataPath": [],
       "ReleaseNotes": [
         "Bug fix only running once per MO2 launch"
+      ]
+    },
+    {
+      "Version": "2.0.0",
+      "Released": "2025-03-30",
+      "MinSupport": "2.4.2",
+      "MaxSupport": "2.4.2",
+      "MinWorking": "2.4.0",
+      "MaxWorking": "",
+      "DownloadUrl": "https://github.com/tkoopman/MO2-BodySlide-Batch-Builder/archive/refs/tags/v2.0.0.zip",
+      "PluginPath": [
+        "MO2-BodySlide-Batch-Builder-2.0.0/BSBB/"
+      ],
+      "LocalePath": [],
+      "DataPath": ["data/BSBB_Config.xml"],
+      "ReleaseNotes": [
+        "Major update, now with GUI interface, improved mesh selection and better stability",
+        "NOTE: Configurations not compatible between versions 1.x and 2.0"
       ]
     }
   ]

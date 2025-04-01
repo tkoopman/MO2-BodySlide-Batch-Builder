@@ -4,13 +4,15 @@
     <SchemaVersion>2.0</SchemaVersion>
     <ProjectGuid>e8b16071-7348-4a8f-a007-23fd7e0900b7</ProjectGuid>
     <ProjectHome>.</ProjectHome>
-    <StartupFile>BodySlideBatchBuilder.py</StartupFile>
+    <StartupFile>
+    </StartupFile>
     <SearchPath>
     </SearchPath>
     <WorkingDirectory>.</WorkingDirectory>
     <OutputPath>.</OutputPath>
     <Name>MO2 BodySlide Batch Builder</Name>
     <RootNamespace>MO2 BodySlide Batch Builder</RootNamespace>
+    <IsWindowsApplication>False</IsWindowsApplication>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)' == 'Debug' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,7 +23,26 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="BodySlideBatchBuilder.py" />
+    <Compile Include="BSBB\BodySlide.py" />
+    <Compile Include="BSBB\Config.py" />
+    <Compile Include="BSBB\Ui_BSBB.py" />
+    <Compile Include="BSBB\BSBBPlugin.py" />
+    <Compile Include="BSBB\Ui_EditBuild.py" />
+    <Compile Include="BSBB\Ui_Settings.py" />
+    <Compile Include="BSBB\VerifyCloseDialog.py" />
+    <Compile Include="BSBB\__init__.py" />
+  </ItemGroup>
+  <ItemGroup>
+    <AdditionalFiles Include="UI\BSBB.ui" />
+  </ItemGroup>
+  <ItemGroup>
+    <Folder Include="BSBB\" />
+    <Folder Include="UI\" />
+  </ItemGroup>
+  <ItemGroup>
+    <Content Include="UI\Problems.ui" />
+    <Content Include="UI\EditBuild.ui" />
+    <Content Include="UI\Settings.ui" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in

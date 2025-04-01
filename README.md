@@ -1,4 +1,6 @@
-This plugin for MO2 will run BodySlide for up to 5 different groups, presets, and output mods.
+# BodySlide Batch Builder (BSBB)
+
+This plugin for MO2 will run BodySlide automatically for multiple configured builds.
 
 ### Requires: 
   - MO2 of course
@@ -6,16 +8,12 @@ This plugin for MO2 will run BodySlide for up to 5 different groups, presets, an
   - BodySlide Executable registered in MO2 as "BodySlide x64"
 
 ### Installation:
-  - Place BodySlideBatchBuilder.py in the MO2/plugins/ folder.
+  - Place the folder BSBB in to your MO2/plugins/ folder.
 
-### Settings:
-  - In MO2, go to the settings for this plugin and configure the builds you want to run.
-  - Default settings are for HIMBO and TNG using HIMBO Zero for OBody and 3BA using - Zeroed Sliders -.
-  - Default output mod is "Output - Bodyslide". 
-    Either make sure you have created this or changed in settings to the output mod name you want to use.
-  - When using clear output mod, the meshes folder will be deleted from output mod before running the build. 
-    If multiple builds going to same output mod, only the first build should clear the output mod.
+### Help
+[Help site](https://tkoopman.github.io/MO2-BodySlide-Batch-Builder/)
 
-### Notes:
-  - This plugin does modify the Config.xml file in the BodySlide mod folder. 
-  - It will create a backup of the Config.xml file before running the builds, and restore it back on completion.
+### Known Issues:
+  - BodySlide build errors about not being able to create output folders.  
+  Just re-run Build All as seems to only happen first time when Meshes folder doesn't 
+  already exist in output mod, however nothing I have tried seems to fix it for me.

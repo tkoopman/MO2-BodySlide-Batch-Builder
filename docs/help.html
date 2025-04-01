@@ -1,0 +1,337 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <link href="./include/main.css" rel="stylesheet" />
+    <link href="./include/img.css" rel="stylesheet" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>BodySlide Batch Builder (BSBB)</title>
+    <style>
+        h3, h4 {
+            margin-bottom: 0px;
+            color: #04AA6D
+        }
+        h3 {
+            margin-top: 0.5em;
+        }
+        h4 {
+            margin-top: 0.2em;
+        }
+
+        .indent {
+            margin-left: 2em;
+        }
+    </style>
+</head>
+<body>
+    <div class="box">
+        <header>
+            <h2>BodySlide Batch Builder (BSBB)</h2>
+        </header>
+        <nav class="menu">
+            <a style="margin-left:auto;" href="./index.html">About</a>
+            <a class="active" href="./help.html">Help</a>
+            <a href="https://www.nexusmods.com/site/mods/1231" target="_blank">Nexus Link</a>
+        </nav>
+        <nav class="menu submenu">
+            <a href="#general">General</a>
+            <a href="#mainscreen">Main Screen</a>
+            <a href="#settings">Settings</a>
+            <a href="#build">Add / Edit Build</a>
+            <a href="#validation">Validation</a>
+        </nav>
+        <div class="main" id="main">
+            <section id="general">
+                <h1>BodySlide Batch Builder Help</h1>
+                <div class="indent">
+                    <h3>How does BSBB decides which mesh to include when multiple exist?</h3>
+                    <div class="indent">
+                        There are multiple methods. First and most obvious is it must be included in the builds list either directly or via group.<br />
+                        After that there are two (2) processes used when multiple still exist for any mesh. I do have ideas of more that may be added later.
+                        <h4>Include Order</h4>
+                        <div class="indent">
+                            BSBB will look at all the available meshes for an output and see which would of been add first in the build's include list.
+                            The include list can contain BodySlide groups or Outfit/Body names. So for any output mesh, include order priority will
+                            find the first include entry that added a mesh. If that include entry was a name of an Outfit or Body then simple, it will use that.
+                            If it was a group it will filter out any other meshes that were not also added by that group.
+                        </div>
+                        <h4>BuildSelection.xml</h4>
+                        <div class="indent">
+                            BodySlide's way of this is you can mark which alternative mesh should be used, and it writes it to this XML file. This is the check box in the lower left of the screen, where you can also right click to see the alternative meshes.<br />
+                            If the file contains an entry for the mesh in question and the alternative mesh it points to exists in the current build, and hasn't already been filtered out by other methods, then it will use the mesh it points to.<br />
+                            In the settings of BSBB you can change if this is used and if so is it used before or after the include order method.
+                        </div>
+                    </div>
+                    <h3>What happens if there are still multiple meshes after the above methods?</h3>
+                    <div class="indent">
+                        During validation it will detect these and be able to present them to you, and assist you with deciding what you want to do.<br />
+                        First for each alternative mesh it will list the groups it is included in. This will help identify if you could resolve these by either adding a group to the include order or re-order the include list to resolve these.<br />
+                        If however that is not an option, then like when you do a build all in BodySlide, in BSBB you can select which to use and have it automatically add them to the top of the include list for you.<br />
+                        Unlike in BodySlide however this will only affect the current build configuration and not apply those selections to other builds you have.<br />
+                        <br />
+                        Lastly in the settings you can also disable this conflict checking during builds. This only disables it when using the "Build All" button and will still display these when manually running a validation.
+                        This however will make BodySlide display it's normal window for any conflicts meaning you will need to accept them there each time.
+                    </div>
+                    <h3>What are the Ignored Slider Sets in the validations window?</h3>
+                    <div class="indent">
+                        These are just meshes that exist that are not included in any enabled build. Could be you don't want these or something you have missed.<br />
+                        By default this is only done when running Validate All, but can be enabled in settings to run when you do Build All as well.
+                    </div>
+                    <h3>Can I see what Outfits / Bodies have been selected by BSB?</h3>
+                    <div class="indent">
+                        Yes. BSBB creates slider groups for each build. Labeled "BSBB Group x", with x being the build number based on current order.<br />
+                        So after running build all you can open BodySlide and look at the groups.<br />
+                        These groups will be stored in the output mod specified in the settings screen. This can be set the same as Build output mods, but must be enabled to run Build All. <br />
+                        Note: If you want to create / update these groups without also building you can hold control while clicking Build All, to only create / update the groups.
+                    </div>
+                    <h3>I get an error in BodySlide saying it can not create some output folders, what do I do?</h3>
+                    <div class="indent">
+                        This is a known bug, that nothing I have tried has fixed. It seems to only happen when running Build All when a output location doesn't already have a meshes folder (even though BSBB creates it first). <br />
+                        So all you have to do is run Build All again, and it seems to be fine unless you manually delete the meshes folder or change output to somewhere new.<br />
+                        Note the BSBB setting to clear the meshes folder before builds doesn't seem to affect this and is safe to use.
+                    </div>
+                </div>
+            </section>
+            <section id="mainscreen">
+                <h1>Main Screen</h1>
+                <div class="responsive">
+                    <div class="img">
+                        <img src="./img/BSBB_Main_Window.png" alt="BSBB Main Screen">
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Build All</div>
+                    <div>
+                        All enabled build entries will:
+                        <ol>
+                            <li>Be validated and config saved,</li>
+                            <li>BodySlide slider group(s) created / updated,</li>
+                            <li>BodySlide x64 run for each build</li>
+                        </ol>
+                        Note: Validation on build of conflicts and ignored Outfits/Bodies can be disabled in Settings.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Builds</div>
+                    <div>
+                        <p>
+                            List of all configured builds listed in order that they will be run. If each outputs to a separate output mod than order won't matter,
+                            but if multiple output to the same output mod, then order may matter if there are some overlaps, with later builds overwriting.
+                        </p>
+                        <p>
+                            The plus (+), and minus (-) buttons above will add new builds or remove selected respectively.<br />
+                            The order can be changed using the Up and Down buttons.
+                        </p>
+                    </div>
+                </div>
+            </section>
+            <section id="settings">
+                <h2>Global Settings</h2>
+                <div class="responsive">
+                    <div class="img">
+                        <img src="./img/Settings.png" alt="BSBB Settings">
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Delete meshes pre-build:</div>
+                    <div>
+                        If enabled post validation BSBB will delete the contents of the Meshes folder, in all output locations, enabled builds point to.<br />
+                        After this it will start the actual builds by launching BodySlide x64
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Include BuildSelection.xml in Outfit/Body priority:</div>
+                    <div>
+                        This says if BSBB should look at BodySlide's BuildSelection.xml during it's calculations on which Outfit and Bodies to build, and if that should be done before or after include order.<br />
+                        Details of this <a href="#general">above</a>.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Check for conflicts on build:</div>
+                    <div>
+                        If checked when running Build All if any mesh conflicts could not be resolved it will display them, and wait for you to either click Ignore or cancel to fix.<br />
+                        Note ignoring conflicts just moves the problem to inside BodySlide which will prompt you to decide which to use. If you resolve these in BSBB then you won't need to interact with BodySlide at all during build process.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Check for ignored meshes on build:</div>
+                    <div>
+                        Disabled by default but this will make it also display any ignored meshes (ones that are not included in any enabled builds) on the validation screen, during the Build All.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Auto close after successful build:</div>
+                    <div>
+                        If BSBB didn't detect any errors during Build All it will auto close out of the BSBB window after builds complete.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Show sources:</div>
+                    <div>
+                        This setting only affects the Validation screen and the Export Data option in tools.<br />
+                        It adds the name of the configuration file that Outfits / Bodies come from as well as the name of the config file(s) that assigned them to certain groups.<br />
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Save BSBB slider groups to:</div>
+                    <div>
+                        This is where the XML file will be created for BodySlide to use during builds. The can be the same output mod as builds, but unlike builds this output mod must be enabled else Validation will fail and you won't be able to run Build All.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Tools</div>
+                    <div>
+                        Contains extra things that didn't fit elsewhere.<br />
+                        First Export Data that will create a pipe (|) separated text file of all Outfits and Bodies that exist and the groups they belong to. Optionally if Show sources option is enabled will also include that extra information.<br />
+                        The other is Locate button that will open Windows Explorer to the BSBB config file if you wish to find it easily to copy elsewhere. This is in the MO2\plugins\data folder.
+
+                        <div class="responsive">
+                            <div class="img">
+                                <img src="./img/Tools.png" alt="BSBB Tools Screen">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            <section id="build">
+                <h1>Add / Edit Build</h1>
+                <div class="responsive">
+                    <div class="img">
+                        <img src="./img/EditBuild.png" alt="BSBB Add / Edit Build Screen">
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Enabled:</div>
+                    <div>
+                        Is this build enabled when performing Build All and Validate All.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Output Mod:</div>
+                    <div>
+                        Output mod that BodySlide will place resulting files in. This mod doesn't need to be enabled or disabled in MO2. BSBB and BodySlide won't care. Only exception is if you also use the same output mod in the settings screen. Then it must be enabled.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Preset:</div>
+                    <div>
+                        Which BodySlide preset to use for this build.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Include:</div>
+                    <div>
+                        This is the list of what to include in the build in order of priority. On the right you can select what to add, by either select and using add button or double clicking.
+                        Items will be added above any selected item or at the bottom if nothing selected, and you can further rearrange the order using the Up and Down buttons.<br />
+                        I recommend if you adding and Outfits / Bodies you add them to the top of the list else the may not be used if a conflicting mesh exists in a group above it.
+                    </div>
+                </div>
+
+                <div class="setting">
+                    <div class="label">Validate</div>
+                    <div>
+                        This will run the validation but only for this build. This means it will not include Ignored meshes as it not checking all other enabled builds.<br />
+                        Validating here will also validate even if the build is disabled.
+                    </div>
+                </div>
+            </section>
+            <section id="Validation">
+                <h1>Validation</h1>
+                <div class="responsive">
+                    <div class="img">
+                        <img src="./img/Validate.png" alt="BSBB Validate Screen">
+                    </div>
+                </div>
+                <p>
+                    This window will show you any errors, unresolved conflicts and Ignored Meshes. Depending on where the validation is triggered from more or less may be displayed.<br />
+                    For instance when displayed due to problems detected during Build All validation, it will include an Ignore button that you can use to still run the builds, as long as no critical errors detected.
+                </p>
+                <p>
+                    For any conflicts I recommend first looking at the groups assigned, and updating your Include list accordingly with groups before adding any Outfits/Bodies to the include list if required.<br />
+                    For instance in the above screenshot I would actually recommend adding the Hands Redone - Clothes group above the CBBE group in your Include list. But if you want to add the actual Outfits / Bodies you can do that from this screen by selecting those you want and clicking the Add to Builds button.<br />
+                    Add to Builds will do that but not save any changes and take you back to the screen you came from to either check the results and if you want re-validate / Build All if you happy with the changes made.
+                </p>
+            </section>
+        </div>
+        <br />
+    </div>
+
+    <div class="clearfix"></div>
+
+    <!-- The Modal -->
+    <div id="myModal" class="modal">
+        <span class="close">×</span>
+        <img class="modal-content" id="img01">
+        <div id="caption"></div>
+    </div>
+
+    <script>
+        const sections = document.querySelectorAll("section");
+        const navLi = document.querySelectorAll(".submenu a");
+        const pageOffset = document.getElementById("main").offsetTop;
+
+        function onMainScroll() {
+            var current = "";
+            var currentScrollPos = document.getElementById("main").scrollTop;
+
+            sections.forEach((section) => {
+                const sectionTop = section.offsetTop - pageOffset - 150;
+                if (currentScrollPos >= sectionTop) {
+                    current = section.getAttribute("id");
+                }
+            });
+
+            navLi.forEach((li) => {
+                if (li.href.toString().endsWith("#" + current)) {
+                    li.classList.add("active");
+                } else {
+                    li.classList.remove("active");
+                }
+            });
+        }
+
+        document.getElementById("main").onscroll = onMainScroll;
+        onMainScroll();
+    </script>
+    <script>
+        // Get the modal
+        var modal = document.getElementById('myModal');
+
+        // Get the <span> element that closes the modal
+        var span = document.getElementsByClassName("close")[0];
+
+        // When the user clicks on <span> (x), close the modal
+        span.onclick = function () {
+            modal.style.display = "none";
+        }
+
+        // Get all images and insert the clicked image inside the modal
+        // Get the content of the image description and insert it inside the modal image caption
+        var images = document.getElementsByTagName('img');
+        var modalImg = document.getElementById("img01");
+        var captionText = document.getElementById("caption");
+        var i;
+        for (i = 0; i < images.length; i++) {
+            images[i].onclick = function () {
+                modal.style.display = "block";
+                modalImg.src = this.src;
+                modalImg.alt = this.alt;
+                captionText.innerHTML = this.alt;
+            }
+        }
+    </script>
+</body>
+</html>
