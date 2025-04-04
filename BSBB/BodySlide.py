@@ -236,10 +236,10 @@ class BodySlide:
         output_groups = {}
         slider_sets = self.sliderSets if slider_sets is None else slider_sets
         for slider_set in slider_sets.values():
-            if slider_set.output not in output_groups:
-                output_groups[slider_set.output] = [slider_set]
+            if slider_set.output.casefold() not in output_groups:
+                output_groups[slider_set.output.casefold()] = [slider_set]
             else:
-                output_groups[slider_set.output].append(slider_set)
+                output_groups[slider_set.output.casefold()].append(slider_set)
         return output_groups
 
     # Reduce slider sets to only ones that appear in the first group in the list.

@@ -35,7 +35,25 @@
         "MO2-BodySlide-Batch-Builder-2.0.0/BSBB/"
       ],
       "LocalePath": [],
-      "DataPath": ["data/BSBB_Config.xml"],
+      "DataPath": [ "data/BSBB_Config.xml" ],
+      "ReleaseNotes": [
+        "Major update, now with GUI interface, improved mesh selection and better stability",
+        "NOTE: Configurations not compatible between versions 1.x and 2.0"
+      ]
+    },
+    {
+      "Version": "2.0.1",
+      "Released": "2025-04-05",
+      "MinSupport": "2.4.2",
+      "MaxSupport": "2.4.2",
+      "MinWorking": "2.4.0",
+      "MaxWorking": "",
+      "DownloadUrl": "https://github.com/tkoopman/MO2-BodySlide-Batch-Builder/archive/refs/tags/v2.0.1.zip",
+      "PluginPath": [
+        "MO2-BodySlide-Batch-Builder-2.0.1/BSBB/"
+      ],
+      "LocalePath": [],
+      "DataPath": [ "data/BSBB_Config.xml" ],
       "ReleaseNotes": [
         "Major update, now with GUI interface, improved mesh selection and better stability",
         "NOTE: Configurations not compatible between versions 1.x and 2.0"
