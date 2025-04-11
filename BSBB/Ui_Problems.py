@@ -79,10 +79,13 @@ class Ui_Problems(object):
         _translate = QtCore.QCoreApplication.translate
         Problems.setWindowTitle(_translate("Problems", "BSBB - Build Conflicts"))
         self.errors_GroupBox.setTitle(_translate("Problems", "Errors"))
+        self.listWidget.setWhatsThis(_translate("Problems", "Errors detected during validation. Errors can not be ignored."))
         self.listWidget.setSortingEnabled(True)
         self.conflicts_GroupBox.setTitle(_translate("Problems", "Conflicts / Ignored Slider Sets"))
+        self.treeWidget.setWhatsThis(_translate("Problems", "Meshes with alternatives that still exist in your build. These can be ignored but you will be prompted in BodySlide which to use."))
         self.treeWidget.headerItem().setText(1, _translate("Problems", "Groups"))
         self.treeWidget.headerItem().setText(2, _translate("Problems", "Source"))
-        self.addButton.setToolTip(_translate("Problems", "Adds and checked conflicts above to the top of the build\'s include list.\n"
+        self.addButton.setToolTip(_translate("Problems", "Adds any checked conflicts above to the top of the build\'s include list.\n"
 "NOTE: Recommended to add Groups first to resolve conflicts and only use this for when no unique group for conflict"))
+        self.addButton.setWhatsThis(_translate("Problems", "Adds selected alternitive meshes to your build, so help resolve conflicts. Recommended to only add this way when other methods like adding/reordering include list may resolve your conflicts."))
         self.addButton.setText(_translate("Problems", "Add to Builds"))

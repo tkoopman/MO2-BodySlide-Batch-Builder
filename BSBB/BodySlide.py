@@ -4,6 +4,7 @@
 # https://github.com/tkoopman/MO2-BodySlide-Batch-Builder/
 
 import logging
+import re
 import mobase  # type: ignore
 import os
 import sys
@@ -13,7 +14,7 @@ from collections.abc import Callable, Sequence
 
 from BSBB import Config
 
-class GroupName(str):
+class CaseInsensitive(str):
     def __eq__(self, other):
         if isinstance(other, str):
             return self.casefold() == other.casefold()
@@ -27,7 +28,10 @@ class SliderGroupMember(object):
 
     def __init__(self, name: str, source: str):
         self.name = name
-        self.sources = [source]
+        self.sources = list[str]()
+        if not isinstance(source, CaseInsensitive):
+            source = CaseInsensitive(source)
+        self.sources.append(source)
 
     def __eq__(self, other):
         if isinstance(other, SliderGroupMember):
@@ -54,7 +58,7 @@ class SliderSet(Config.Output):
         self.name = name
         self.in_buildselection = in_buildselection
         self.source = source
-        self.groups = list[GroupName]()
+        self.groups = list[CaseInsensitive]()
 
     def __str__(self):
         return self.name
@@ -80,16 +84,57 @@ class SliderSet(Config.Output):
 
         return False
 
-    def groupsAsStr(self, groupMembers: dict[GroupName, list[SliderGroupMember]] | None = None) -> str:
+    def groupsAsStr(self, groupMembers: dict[CaseInsensitive, list[SliderGroupMember]] | None = None) -> str:
         if groupMembers is None:
             return ", ".join(self.groups)
 
         result = list[str]()
         for group in self.groups:
-            sources = ", ".join([source for group in groupMembers[group] if self.name == group.name for source in group.sources])
-            result.append(f"{group} ({sources})")
+            if group == 'Unassigned':
+                result.append(f"{group}")
+            else:
+                sources = ", ".join([source for group in groupMembers[group] if self.name == group.name for source in group.sources])
+                result.append(f"{group} ({sources})")
 
         return ", ".join(result)
+
+    # Matches filter
+    def IsMatch(self, bs: 'BodySlide', *, include: Config.IncludeItem | None = None, matchType: Config.IncludeType | None = None, matchName: str | None = None) -> bool:
+        if include:
+            matchType = include.type
+            matchName = include.name
+
+        if matchType is None or matchName is None:
+            raise ValueError("Must supply matchType and matchName, or include")
+
+        
+        match matchType:
+            case Config.IncludeType.GROUP:
+                return CaseInsensitive(matchName) in self.groups
+            case Config.IncludeType.SLIDERSET:
+                return matchName.casefold() == self.name.casefold()
+            case Config.IncludeType.SOURCE:
+                match matchName[-4:]:
+                    case '.xml':
+                        matchName = CaseInsensitive(matchName)
+                        for group in self.groups:
+                            # Have to check as we added Unassigned group
+                            if group in bs.sliderGroups:
+                                g = bs.sliderGroups[group]
+                                for member in g:
+                                    if member.name == self.name:
+                                        if matchName in member.sources:
+                                            return True
+
+                        return False
+                    case '.osp':
+                        return self.source.casefold() == matchName.casefold()
+                    case _:
+                        return False
+            case Config.IncludeType.CONTAINS:
+                return matchName.casefold() in self.name.casefold()
+            case Config.IncludeType.REGEX:
+                return re.match(pattern=matchName, string=self.name) is not None
 
 class BodySlide:
     def __init__(self, body_slide_dir: str, *, get_file: Callable[[str|None, str, bool], str] | None = None, get_files: Callable[[str, str], list[str]|Sequence[str]] | None = None):
@@ -132,8 +177,8 @@ class BodySlide:
         return presets
 
     # Read all slider groups from the BodySlide config directory.
-    def _read_slider_groups(self, *, exclude_slide_group_files: list[str]) -> dict[GroupName, list[SliderGroupMember]]:
-        group_members = dict[GroupName, list[SliderGroupMember]]()
+    def _read_slider_groups(self, *, exclude_slide_group_files: list[str]) -> dict[CaseInsensitive, list[SliderGroupMember]]:
+        group_members = dict[CaseInsensitive, list[SliderGroupMember]]()
 
         for file_path in self.get_files('SliderGroups', 'xml'):
             filename = os.path.basename(file_path)
@@ -141,7 +186,7 @@ class BodySlide:
                 tree = ET.parse(file_path)
                 root = tree.getroot()
                 for group in root.findall('Group'):
-                    group_name = GroupName(group.get('name'))
+                    group_name = CaseInsensitive(group.get('name'))
                     members = [SliderGroupMember(str(member.get('name')), filename) for member in group.findall('Member')]
                     if group_name not in group_members:
                         group_members[group_name] = members
@@ -150,7 +195,7 @@ class BodySlide:
                             if member not in group_members[group_name]:
                                 group_members[group_name].append(member)
                             else:
-                                group_members[group_name][group_members[group_name].index(member)].sources.append(filename)
+                                group_members[group_name][group_members[group_name].index(member)].sources.append(CaseInsensitive(filename))
 
         return group_members
 
@@ -206,30 +251,28 @@ class BodySlide:
         if add_unassigned_group:
             for slider_set in self.sliderSets.values():
                 if len(slider_set.groups) == 0:
-                    slider_set.groups.append(GroupName("Unassigned"))
+                    slider_set.groups.append(CaseInsensitive("Unassigned"))
 
     # Get all slider sets that are members of the specified groups.
-    def __get_slider_sets(self, include: list[Config.Item]) -> dict[str, SliderSet]:
-        output_sets = {}
-        for item in include:
-            match item.type:
-                case Config.ItemType.GROUP:
-                    groupName = GroupName(item.name)
-                    if groupName not in self.sliderGroups:
-                        raise ValueError(f"Group '{item.name}' not found in slider groups.")
+    def GetMatchingSliderSets(self, includes: list[Config.IncludeItem] | Config.IncludeItem) -> dict[str, SliderSet]:
+        output_sets = dict[str, SliderSet]()
+        single = False
+        if isinstance(includes, Config.IncludeItem):
+            single = True
+            includes = [includes]
 
-                    for member in self.sliderGroups[groupName]:
-                        if member.name not in output_sets:
-                            if member.name in self.sliderSets:
-                                output_sets[member.name] = self.sliderSets[member.name]
-                case Config.ItemType.SLIDERSET:
-                    if item.name not in self.sliderSets:
-                        raise ValueError(f"Outfit/Body '{item.name}' not found in slider sets.")
+        excludes = list[str]()
+        if not single:
+            for exclude in [exclude for exclude in includes if exclude.use == Config.IncludeUse.Exclude]:
+                for name, ss in self.sliderSets.items():
+                    if name not in excludes and ss.IsMatch(self, include=exclude):
+                        excludes.append(name)
 
-                    sliderSet = self.sliderSets[item.name]
-                    output_sets[sliderSet.name] = sliderSet
-                case _:
-                    raise ValueError(f"Item type {item.type} invalid for include lists")
+        for include in [include for include in includes if include.isUseAdd()]:
+            for name, ss in self.sliderSets.items():
+                if name not in excludes and ss.IsMatch(self, include=include):
+                    output_sets[CaseInsensitive(name)] = ss
+
         return output_sets
 
     def SliderSetsByOutput(self, slider_sets: dict[str, SliderSet] | None = None) -> dict[str, list[SliderSet]]:
@@ -244,25 +287,27 @@ class BodySlide:
 
     # Reduce slider sets to only ones that appear in the first group in the list.
     # output_sets: list of sets for a single output path.
-    def __priority_include_order(self, output_sets:list[SliderSet], include: list[Config.Item]) -> list[SliderSet]:
-        valid_sets = list[SliderSet]()
-        for item in include:
-            match item.type:
-                case Config.ItemType.GROUP:
-                    for slider_set in output_sets:
-                        if item.name in slider_set.groups:
-                            valid_sets.append(slider_set)
-                case Config.ItemType.SLIDERSET:
-                    for slider_set in output_sets:
-                        if item.name == slider_set.name:
-                            return [slider_set]
-                case _:
-                    raise ValueError(f"Item type {item.type} invalid for include lists")
-            if len(valid_sets) > 0:
-                return valid_sets
+    def __priority_include_order_single(self, output_sets:list[SliderSet], include: Config.IncludeItem) -> list[SliderSet]:
+        if len(output_sets) <= 1:
+            return output_sets
+            
+        workingList = [ss for ss in output_sets if ss.IsMatch(self, include=include)]
 
-        # Should never reach here
-        return valid_sets
+        return workingList if workingList else output_sets
+
+
+    def __priority_include_order(self, output_sets:list[SliderSet], includes: list[Config.IncludeItem]) -> list[SliderSet]:
+        if len(output_sets) <= 1:
+            return output_sets
+
+        workingList = output_sets
+        for include in [i for i in includes if i.isUsePriority()]:
+            workingList = self.__priority_include_order_single(workingList, include)
+
+            if len(workingList) == 1:
+                return workingList
+
+        return workingList
 
     # Reduce slider sets to only ones that appear BuildSelection.xml unless no sets exist in that file.
     # output_sets: list of sets for a single output path.
@@ -277,7 +322,7 @@ class BodySlide:
 
         return valid_sets
 
-    def get_silder_sets_filtered(self, groups: list[Config.Item], *, priorities: list[Config.PriorityOrder] = [Config.PriorityOrder.GROUP, Config.PriorityOrder.BUILDSELECTION], allowConflicts: bool = False) -> list[SliderSet]:
+    def get_silder_sets_filtered(self, groups: list[Config.IncludeItem], *, priorities: list[Config.PriorityOrder] = [Config.PriorityOrder.INCLUDEORDER, Config.PriorityOrder.BUILDSELECTION], allowConflicts: bool = False) -> list[SliderSet]:
         slider_sets_by_output = self.get_slider_sets_filtered_by_output(groups, priorities=priorities)
 
         # Check for any outputs with multiple slider sets still
@@ -298,11 +343,11 @@ class BodySlide:
                   for sliderSet in sliderSets
             ]
 
-    def get_slider_sets_filtered_by_output(self, include: list[Config.Item], *, priorities: list[Config.PriorityOrder] = [Config.PriorityOrder.GROUP, Config.PriorityOrder.BUILDSELECTION]) -> dict[str, list[SliderSet]]:
-        slider_sets_by_output = self.SliderSetsByOutput(self.__get_slider_sets(include))
+    def get_slider_sets_filtered_by_output(self, include: list[Config.IncludeItem], *, priorities: list[Config.PriorityOrder] = [Config.PriorityOrder.INCLUDEORDER, Config.PriorityOrder.BUILDSELECTION]) -> dict[str, list[SliderSet]]:
+        slider_sets_by_output = self.SliderSetsByOutput(self.GetMatchingSliderSets(include))
 
         for priority in priorities:
-            if priority == Config.PriorityOrder.GROUP:
+            if priority == Config.PriorityOrder.INCLUDEORDER:
                 for output in slider_sets_by_output:
                     if len(slider_sets_by_output[output]) > 1:
                         slider_sets_by_output[output] = self.__priority_include_order(slider_sets_by_output[output], include)

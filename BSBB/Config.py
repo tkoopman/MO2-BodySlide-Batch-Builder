@@ -11,6 +11,7 @@ import xml.etree.ElementTree as ET
 from abc import abstractmethod
 from enum import Enum
 
+
 # Defines the priority order for selecting slider sets when multiple exist for the same output.
 # GROUP: Select the first slider set from the first group in the list that is exists in.
 # BUILDSELECTION: Use BuildSelection.xml
@@ -18,26 +19,45 @@ from enum import Enum
 # If after all priority orders are checked and still multiple values, error will be raised.
 # So if you want top prevent an error, make sure FIRST is the last in the list.
 class PriorityOrder(Enum):
-    GROUP = 1
+    INCLUDEORDER = 1
     BUILDSELECTION = 2
     FIRST = 3
 
 
-class ItemType(Enum):
+class IncludeType(Enum):
     GROUP = 1
     SLIDERSET = 2
-    MESH = 3
-    SOURCE = 4
+    SOURCE = 3
+    CONTAINS = 4
+    REGEX = 5
 
 
-class Item(object):
+class IncludeUse(Enum):
+    Exclude = 0b001
+    Include = 0b010
+    IncludeKeep = 0b110
+    Keep = 0b100
+    Remove = 0b101
 
-    def __init__(self, type: ItemType, name: str):
+
+class IncludeItem(object):
+
+    def __init__(self, type: IncludeType, name: str, use: IncludeUse):
         self.type = type
         self.name = name
+        self.use = use
 
     def typeAsStr(self) -> str:
-        return itemTypeToStr(self.type)
+        return includeTypeToStr(self.type)
+
+    def useAsStr(self) -> str:
+        return includeUseToStr(self.use)
+
+    def isUsePriority(self) -> bool:
+        return (self.use.value & 0b100) == 0b100
+
+    def isUseAdd(self) -> bool:
+        return (self.use.value & IncludeUse.Include.value) == IncludeUse.Include.value
 
     def __str__(self):
         return self.name
@@ -46,7 +66,7 @@ class Item(object):
         return f"Item({self.type}, '{self.name}')"
 
     def __eq__(self, other) -> bool:
-        if isinstance(other, Item):
+        if isinstance(other, IncludeItem):
             return self.type == other.type and self.name.casefold(
             ) == other.name.casefold()
 
@@ -92,22 +112,36 @@ class Output(object):
 class Build(Output):
 
     def __init__(self, enable: bool, output: str, preset: str,
-                 include: list[Item]):
+                 include: list[IncludeItem]):
         super().__init__(output)
         self.enable: bool = enable
         self.preset: str = preset
-        self.include: list[Item] = include
+        self.include: list[IncludeItem] = include
 
     def includeAsStr(self) -> str:
-        return ','.join([include.name for include in self.include])
+        result = list[str]()
+        for include in self.include:
+            i = ''
+            match include.use:
+                case IncludeUse.Exclude:
+                    i += '!'
+                case IncludeUse.Remove:
+                    i += '-'
+                case IncludeUse.Keep:
+                    i += '+'
+                case IncludeUse.IncludeKeep:
+                    i += '++'
+            i += include.name
+            result.append(i)
+        return ','.join(result)
 
     def clone(self) -> 'Build':
         return Build(self.enable, self.output, self.preset, list(self.include))
 
-    def removeInclude(self, itemType: ItemType, name: str) -> bool:
+    def removeInclude(self, itemType: IncludeType, name: str) -> bool:
         for x in range(len(self.include)):
-            item = self.include[x]
-            if itemType == item.type and name == item.name:
+            include = self.include[x]
+            if itemType == include.type and name == include.name:
                 self.include.pop(x)
                 return True
         return False
@@ -145,13 +179,15 @@ def convertToBool(value, *, default: bool = False) -> bool:
         value, str) else default
 
 
-def convertToPriorities(value: str) -> list[PriorityOrder]:
+def strToPriorities(value: str) -> list[PriorityOrder]:
     values = [v.strip() for v in value.split(",")]
     priorities = list[PriorityOrder]()
     for v in values:
         match v.casefold():
             case 'group':
-                priorities.append(PriorityOrder.GROUP)
+                priorities.append(PriorityOrder.INCLUDEORDER)
+            case 'includeorder':
+                priorities.append(PriorityOrder.INCLUDEORDER)
             case 'buildselection':
                 priorities.append(PriorityOrder.BUILDSELECTION)
             case 'first':
@@ -160,43 +196,73 @@ def convertToPriorities(value: str) -> list[PriorityOrder]:
     return priorities
 
 
-def itemTypeToStr(itemType: ItemType) -> str:
+def includeTypeToStr(itemType: IncludeType) -> str:
     match itemType:
-        case ItemType.GROUP:
+        case IncludeType.GROUP:
             return 'Group'
-        case ItemType.SLIDERSET:
+        case IncludeType.SLIDERSET:
             return 'Outfit or Body'
-        case ItemType.MESH:
-            return 'Mesh'
-        case ItemType.SOURCE:
+        case IncludeType.SOURCE:
             return 'Source'
+        case IncludeType.CONTAINS:
+            return 'Contains'
+        case IncludeType.REGEX:
+            return 'Regex'
 
 
-def strToItemType(itemType: str) -> ItemType:
+def strToIncludeType(itemType: str | None) -> IncludeType:
+    if not itemType:
+        return IncludeType.SLIDERSET
+
     itemType = itemType.casefold()
     match itemType:
         case 'group':
-            return ItemType.GROUP
-        case 'outfit or body':
-            return ItemType.SLIDERSET
-        case 'mesh':
-            return ItemType.MESH
+            return IncludeType.GROUP
         case 'source':
-            return ItemType.SOURCE
-        case 'src':
-            return ItemType.SOURCE
+            return IncludeType.SOURCE
+        case 'contains':
+            return IncludeType.CONTAINS
+        case 'regex':
+            return IncludeType.REGEX
         case _:
-            if 'outfit' in itemType or 'body' in itemType:
-                return ItemType.SLIDERSET
+            return IncludeType.SLIDERSET
 
-            raise ValueError(f"Invalid item type: {itemType}")
+def includeUseToStr(itemUse: IncludeUse) -> str:
+    match itemUse:
+        case IncludeUse.Exclude:
+            return 'Exclude'
+        case IncludeUse.Include:
+            return 'Include'
+        case IncludeUse.IncludeKeep:
+            return 'Include & Keep'
+        case IncludeUse.Keep:
+            return 'Keep'
+        case IncludeUse.Remove:
+            return 'Remove'
+
+def strToIncludeUse(itemUse: str | None) -> IncludeUse:
+    if not itemUse:
+        return IncludeUse.IncludeKeep
+
+    itemUse = itemUse.casefold()
+    match itemUse:
+        case 'exclude':
+            return IncludeUse.Exclude
+        case 'include':
+            return IncludeUse.Include
+        case 'keep':
+            return IncludeUse.Keep
+        case 'remove':
+            return IncludeUse.Remove
+        case _:
+            return IncludeUse.IncludeKeep
 
 
 def loadConfig(file_path: str) -> tuple[Global, list[Build]]:
     builds = list[Build]()
     config = Global(
         deleteMeshes=False,
-        priorities=[PriorityOrder.GROUP, PriorityOrder.BUILDSELECTION],
+        priorities=[PriorityOrder.INCLUDEORDER, PriorityOrder.BUILDSELECTION],
         onBuildCheckConflicts=True,
         onBuildCheckIgnored=False,
         autoClose=True,
@@ -207,13 +273,13 @@ def loadConfig(file_path: str) -> tuple[Global, list[Build]]:
         # Create default builds
         builds.append(
             Build(True, 'Output - BodySlide', 'HIMBO Zero for OBody',
-                  [Item(ItemType.GROUP, 'HIMBO'),
-                   Item(ItemType.GROUP, 'TNG')]))
+                  [IncludeItem(IncludeType.GROUP, 'HIMBO', IncludeUse.IncludeKeep),
+                   IncludeItem(IncludeType.GROUP, 'TNG', IncludeUse.IncludeKeep)]))
         builds.append(
             Build(True, 'Output - BodySlide', '- Zeroed Sliders -', [
-                Item(ItemType.GROUP, '3BA'),
-                Item(ItemType.GROUP, '3BBB'),
-                Item(ItemType.GROUP, 'CBBE')
+                IncludeItem(IncludeType.GROUP, '3BA', IncludeUse.IncludeKeep),
+                IncludeItem(IncludeType.GROUP, '3BBB', IncludeUse.IncludeKeep),
+                IncludeItem(IncludeType.GROUP, 'CBBE', IncludeUse.IncludeKeep)
             ]))
         return config, builds
 
@@ -229,7 +295,7 @@ def loadConfig(file_path: str) -> tuple[Global, list[Build]]:
                 case "deleteMeshes":
                     config.deleteMeshes = convertToBool(value)
                 case "priorities":
-                    config.priorities = convertToPriorities(value)
+                    config.priorities = strToPriorities(value)
                 case "onBuildCheckConflicts":
                     config.onBuildCheckConflicts = convertToBool(value)
                 case "onBuildCheckIgnored":
@@ -249,20 +315,21 @@ def loadConfig(file_path: str) -> tuple[Global, list[Build]]:
         enable = convertToBool(build.get('enable'))
         output = build.get('output')
         preset = build.get('preset')
-        include = list[Item]()
-        for item in build.findall('Include'):
-            itemType = item.get('type')
-            name = item.get('name')
+        includes = list[IncludeItem]()
+        for include in build.findall('Include'):
+            includeType = strToIncludeType(include.get('type'))
+            name = include.get('name')
+            includeUse = strToIncludeUse(include.get('use'))
 
-            if not isinstance(name, str) or not isinstance(itemType, str):
+            if not isinstance(name, str):
                 raise ValueError('Error reading in build from bsbb_config.xml')
 
-            include.append(Item(strToItemType(itemType), name))
+            includes.append(IncludeItem(includeType, name, includeUse))
 
         if not isinstance(output, str) or not isinstance(preset, str):
             raise ValueError('Error reading in build from bsbb_config.xml')
 
-        builds.append(Build(enable, output, preset, include))
+        builds.append(Build(enable, output, preset, includes))
 
     return config, builds
 
@@ -307,9 +374,23 @@ def saveConfig(globalConfig: Global, builds: list[Build], file_path: str):
                                    output=build.output,
                                    preset=build.preset)
         for include in build.include:
-            e = ET.Element('Include',
-                           type=itemTypeToStr(include.type),
-                           name=include.name)
+            if include.type == IncludeType.SLIDERSET and include.use == IncludeUse.IncludeKeep:
+                e = ET.Element('Include',
+                               name=include.name)
+            elif include.type == IncludeType.SLIDERSET:
+                e = ET.Element('Include',
+                               name=include.name,
+                               use=includeUseToStr(include.use))
+            elif include.use == IncludeUse.IncludeKeep:
+                e = ET.Element('Include',
+                               name=include.name,
+                               type=includeTypeToStr(include.type))
+            else:
+                e = ET.Element('Include',
+                               name=include.name,
+                               type=includeTypeToStr(include.type),
+                               use=includeUseToStr(include.use))
+
             build_element.append(e)
 
         root.append(build_element)

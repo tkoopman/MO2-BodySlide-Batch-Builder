@@ -23,32 +23,30 @@
     <EnableUnmanagedDebugging>false</EnableUnmanagedDebugging>
   </PropertyGroup>
   <ItemGroup>
-    <Compile Include="BSBB\BodySlide.py" />
-    <Compile Include="BSBB\Config.py" />
-    <Compile Include="BSBB\Ui_BSBB.py" />
-    <Compile Include="BSBB\BSBBPlugin.py" />
-    <Compile Include="BSBB\Ui_EditBuild.py" />
-    <Compile Include="BSBB\Ui_Settings.py" />
-    <Compile Include="BSBB\VerifyCloseDialog.py" />
-    <Compile Include="BSBB\__init__.py" />
-  </ItemGroup>
-  <ItemGroup>
-    <AdditionalFiles Include="UI\BSBB.ui" />
+    <None Include="BSBB\BodySlide.py" />
+    <None Include="BSBB\Config.py" />
+    <None Include="BSBB\Ui_BSBB.py" />
+    <None Include="BSBB\BSBBPlugin.py" />
+    <None Include="BSBB\Ui_EditBuild.py" />
+    <None Include="BSBB\Ui_Settings.py" />
+    <None Include="BSBB\VerifyCloseDialog.py" />
+    <None Include="BSBB\__init__.py" />
   </ItemGroup>
   <ItemGroup>
     <Folder Include="BSBB\" />
     <Folder Include="UI\" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="UI\Problems.ui" />
-    <Content Include="UI\EditBuild.ui" />
-    <Content Include="UI\Settings.ui" />
+    <Compile Include="UI\BSBB.ui" />
+    <Compile Include="UI\Problems.ui" />
+    <Compile Include="UI\EditBuild.ui" />
+    <Compile Include="UI\Settings.ui" />
   </ItemGroup>
   <Import Project="$(MSBuildExtensionsPath32)\Microsoft\VisualStudio\v$(VisualStudioVersion)\Python Tools\Microsoft.PythonTools.targets" />
   <!-- Uncomment the CoreCompile target to enable the Build command in
        Visual Studio and specify your pre- and post-build commands in
        the BeforeBuild and AfterBuild targets below. -->
-  <!--<Target Name="CoreCompile" />-->
+  <Target Name="CoreCompile" />
   <Target Name="BeforeBuild">
   </Target>
   <Target Name="AfterBuild">
