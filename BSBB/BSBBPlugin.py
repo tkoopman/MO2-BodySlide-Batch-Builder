@@ -521,7 +521,11 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
             buildName = f"BSBB Build {x+1}"
             enabledBuilds[buildName] = build
             
-            meshesPath = f"{build.output}/meshes"
+            outputMod = self.__organizer.modList().getMod(build.output)
+            if not outputMod:
+                raise FileNotFoundError(build.output)
+
+            meshesPath = f"{outputMod.absolutePath()}/meshes"
             
             if not createGroupsOnly:
                 os.makedirs(meshesPath, exist_ok=True) # Failed attempt to fix BodySlide error creating folders on first build
@@ -536,9 +540,6 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
                 self.BodySlide.create_slider_group(
                     'BSBB_Groups.xml', f"BSBB Build {x+1}",
                     [sliderSet.name for sliderSet in sliderSets])
-                # Failed attempt to fix BodySlide error creating folders on first build
-                #for sliderSet in sliderSets:
-                #    os.makedirs(os.path.dirname(sliderSet.output), exist_ok=True)
             except ValueError:
                 logging.error(repr(sys.exception()))
                 return
