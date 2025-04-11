@@ -78,6 +78,23 @@
         "Added Exclude entries to prevent matching Outfits / Bodies being included",
         "Add help within the UI"
       ]
+    },
+    {
+      "Version": "2.1.1",
+      "Released": "2025-04-12",
+      "MinSupport": "2.4.2",
+      "MaxSupport": "2.4.2",
+      "MinWorking": "2.4.0",
+      "MaxWorking": "",
+      "DownloadUrl": "https://github.com/tkoopman/MO2-BodySlide-Batch-Builder/archive/refs/tags/v2.1.1.zip",
+      "PluginPath": [
+        "MO2-BodySlide-Batch-Builder-2.1.1/BSBB/"
+      ],
+      "LocalePath": [],
+      "DataPath": [ "data/BSBB_Config.xml", "data/BSBB_Config.ini" ],
+      "ReleaseNotes": [
+        "Minor Bug Fix"
+      ]
     }
   ]
 }
