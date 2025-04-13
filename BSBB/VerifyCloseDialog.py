@@ -7,10 +7,12 @@ from abc import abstractmethod
 from PyQt6.QtGui import QCloseEvent
 from PyQt6.QtWidgets import QDialog, QWidget
 
+
 class MyCloseEvent:
     @abstractmethod
     def closeEvent(self, closeEvent: QCloseEvent):
         pass
+
 
 class VerifyCloseDialog(QDialog, QWidget):
     def __init__(self, parent: QWidget, myCloseEvent: MyCloseEvent) -> None:
