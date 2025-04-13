@@ -5,6 +5,7 @@
 
 import logging
 import os
+from typing import Any
 import mobase  # type: ignore
 import xml.etree.ElementTree as ET
 
@@ -65,7 +66,7 @@ class IncludeItem(object):
     def __repr__(self):
         return f"Item({self.type}, '{self.name}')"
 
-    def __eq__(self, other) -> bool:
+    def __eq__(self, other:Any) -> bool:
         if isinstance(other, IncludeItem):
             return self.type == other.type and self.name.casefold(
             ) == other.name.casefold()
@@ -94,9 +95,9 @@ class Output(object):
             return mo.overwritePath()
 
         mod = mo.modList().getMod(self.output)
-        return None if mod is None else mod.absolutePath()
+        return None if mod is None else mod.absolutePath() # type: ignore
 
-    def __eq__(self, other):
+    def __eq__(self, other:Any) -> bool:
         if isinstance(other, Output):
             return self.output.casefold() == other.output.casefold()
 
@@ -121,16 +122,17 @@ class Build(Output):
     def includeAsStr(self) -> str:
         result = list[str]()
         for include in self.include:
-            i = ''
             match include.use:
                 case IncludeUse.Exclude:
-                    i += '!'
+                    i = '!'
                 case IncludeUse.Remove:
-                    i += '-'
+                    i = '-'
                 case IncludeUse.Keep:
-                    i += '+'
+                    i = '+'
                 case IncludeUse.IncludeKeep:
-                    i += '++'
+                    i = '++'
+                case _:
+                    i = ''
             i += include.name
             result.append(i)
         return ','.join(result)
@@ -146,7 +148,7 @@ class Build(Output):
                 return True
         return False
 
-    def __eq__(self, other):
+    def __eq__(self, other:Any) -> bool:
         if isinstance(other, Build):
             return self.output.casefold() == other.output.casefold(
             ) and self.enable == other.enable and self.preset == other.preset and len(
@@ -174,7 +176,7 @@ class Global(Output):
         self.showSources = showSources
 
 
-def convertToBool(value, *, default: bool = False) -> bool:
+def convertToBool(value:Any, *, default: bool = False) -> bool:
     return value.casefold() in ['true', 'yes', '1'] if isinstance(
         value, str) else default
 
@@ -192,6 +194,8 @@ def strToPriorities(value: str) -> list[PriorityOrder]:
                 priorities.append(PriorityOrder.BUILDSELECTION)
             case 'first':
                 priorities.append(PriorityOrder.FIRST)
+            case _:
+                raise BaseException(f"Unknown priority: {v}")
 
     return priorities
 

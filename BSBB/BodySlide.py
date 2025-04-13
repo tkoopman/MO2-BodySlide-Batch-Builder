@@ -5,6 +5,7 @@
 
 import logging
 import re
+from typing import Any, TextIO
 import mobase  # type: ignore
 import os
 import sys
@@ -15,13 +16,13 @@ from collections.abc import Callable, Sequence
 from BSBB import Config
 
 class CaseInsensitive(str):
-    def __eq__(self, other):
+    def __eq__(self, other:Any) -> bool:
         if isinstance(other, str):
             return self.casefold() == other.casefold()
 
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.casefold()))
 
 class SliderGroupMember(object):
@@ -33,7 +34,7 @@ class SliderGroupMember(object):
             source = CaseInsensitive(source)
         self.sources.append(source)
 
-    def __eq__(self, other):
+    def __eq__(self, other:Any) -> bool:
         if isinstance(other, SliderGroupMember):
             return self.name.casefold() == other.name.casefold()
 
@@ -42,13 +43,13 @@ class SliderGroupMember(object):
 
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash ((self.name.casefold()))
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"SliderGroupMember('{self.name}', [ {', '.join([f"'{source}'" for source in self.sources])} ] )"
 
 class SliderSet(Config.Output):
@@ -60,18 +61,18 @@ class SliderSet(Config.Output):
         self.source = source
         self.groups = list[CaseInsensitive]()
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def __repr__(self):
+    def __repr__(self) -> str:
         return f"SliderSetDetails('{self.name}', {self.in_buildselection}, '{self.output}', '{self.source}')"
 
-    def __eq__(self, other):
+    def __eq__(self, other:Any) -> bool:
         if isinstance(other, SliderSet):
             return super().__eq__(other) and self.name.casefold() == other.name.casefold()
         return False
 
-    def __hash__(self):
+    def __hash__(self) -> int:
         return hash((self.output.casefold(), self.name.casefold()))
 
     def isMember(self, group: str | list[str]) -> bool:
@@ -150,7 +151,7 @@ class BodySlide:
 
         self._body_slide_dir = body_slide_dir
 
-    def load_configs(self, *, exclude_slide_group_files: list[str] = []):
+    def load_configs(self, *, exclude_slide_group_files: list[str] = []) -> None:
         self.presets = self._read_slider_presets()
         self.sliderGroups = self._read_slider_groups(exclude_slide_group_files=exclude_slide_group_files)
         self.sliderSets = self._read_slider_sets()
@@ -168,11 +169,15 @@ class BodySlide:
         presets = list[str]()
 
         for file_path in self.get_files('SliderPresets', 'xml'):
-            tree = ET.parse(file_path)
-            root = tree.getroot()
-            for preset in root.findall('Preset'):
-                name = str(preset.get('name'))
-                presets.append(name)
+            try:
+                tree = ET.parse(file_path)
+                root = tree.getroot()
+                for preset in root.findall('Preset'):
+                    name = str(preset.get('name'))
+                    presets.append(name)
+            except Exception as e:
+                logging.error(f"Ignoring file that was unable to be parsed: {file_path}")
+                logging.error(e)
 
         return presets
 
@@ -183,19 +188,23 @@ class BodySlide:
         for file_path in self.get_files('SliderGroups', 'xml'):
             filename = os.path.basename(file_path)
             if filename not in exclude_slide_group_files:
-                tree = ET.parse(file_path)
-                root = tree.getroot()
-                for group in root.findall('Group'):
-                    group_name = CaseInsensitive(group.get('name'))
-                    members = [SliderGroupMember(str(member.get('name')), filename) for member in group.findall('Member')]
-                    if group_name not in group_members:
-                        group_members[group_name] = members
-                    else:
-                        for member in members:
-                            if member not in group_members[group_name]:
-                                group_members[group_name].append(member)
-                            else:
-                                group_members[group_name][group_members[group_name].index(member)].sources.append(CaseInsensitive(filename))
+                try:
+                    tree = ET.parse(file_path)
+                    root = tree.getroot()
+                    for group in root.findall('Group'):
+                        group_name = CaseInsensitive(group.get('name'))
+                        members = [SliderGroupMember(str(member.get('name')), filename) for member in group.findall('Member')]
+                        if group_name not in group_members:
+                            group_members[group_name] = members
+                        else:
+                            for member in members:
+                                if member not in group_members[group_name]:
+                                    group_members[group_name].append(member)
+                                else:
+                                    group_members[group_name][group_members[group_name].index(member)].sources.append(CaseInsensitive(filename))
+                except Exception as e:
+                    logging.error(f"Ignoring file that was unable to be parsed: {file_path}")
+                    logging.error(e)
 
         return group_members
 
@@ -205,44 +214,51 @@ class BodySlide:
 
         if not os.path.exists(file_path):
             return output
+        try:
+            tree = ET.parse(file_path)
+            root = tree.getroot()
+            for bs in root.findall('OutputChoice'):
+                path = bs.get('path')
+                choice = bs.get('choice')
+                if not (isinstance(path, str) and isinstance(choice, str)):
+                    logging.warning('Error reading output choice')
+                    break
 
-        tree = ET.parse(file_path)
-        root = tree.getroot()
-        for bs in root.findall('OutputChoice'):
-            path = bs.get('path')
-            choice = bs.get('choice')
-            if not (isinstance(path, str) and isinstance(choice, str)):
-                logging.warning('Error reading output choice')
-                break
-
-            output[path.casefold()] = choice
+                output[path.casefold()] = choice
+        except Exception as e:
+            logging.error(f"Unable to parse: {file_path}")
+            logging.error(e)
 
         return output
 
     # Read all slider sets from the BodySlide config directory.
     def _read_slider_sets(self) -> dict[str, SliderSet]:
         buildselection = self._read_buildselection_xml()
-        slider_sets = {}
+        slider_sets = dict[str, SliderSet]()
         for file_path in self.get_files('SliderSets', 'osp'):
-            filename = os.path.basename(file_path)
-            tree = ET.parse(file_path)
-            root = tree.getroot()
-            for slider_set in root.findall('SliderSet'):
-                source_file = filename
-                name = slider_set.get('name')
-                output_path = slider_set.find('OutputPath')
-                output_file = slider_set.find('OutputFile')
-                if not isinstance(name, str) or not isinstance(output_path, ET.Element) or not isinstance(output_file, ET.Element) or not isinstance(output_path.text, str) or not isinstance(output_file.text, str):
-                    logging.warning(f"Error reading SliderSet in {filename}")
-                else:
-                    output = os.path.join(output_path.text, output_file.text)
-                    in_buildselection = output.casefold() in buildselection and buildselection[output.casefold()] == name
+            try:
+                filename = os.path.basename(file_path)
+                tree = ET.parse(file_path)
+                root = tree.getroot()
+                for slider_set in root.findall('SliderSet'):
+                    source_file = filename
+                    name = slider_set.get('name')
+                    output_path = slider_set.find('OutputPath')
+                    output_file = slider_set.find('OutputFile')
+                    if not isinstance(name, str) or not isinstance(output_path, ET.Element) or not isinstance(output_file, ET.Element) or not isinstance(output_path.text, str) or not isinstance(output_file.text, str):
+                        logging.warning(f"Error reading SliderSet in {filename}")
+                    else:
+                        output = os.path.join(output_path.text, output_file.text)
+                        in_buildselection = output.casefold() in buildselection and buildselection[output.casefold()] == name
 
-                    slider_sets[name] = SliderSet(name, in_buildselection, output, source_file)
+                        slider_sets[name] = SliderSet(name, in_buildselection, output, source_file)
+            except Exception as e:
+                logging.error(f"Ignoring file that was unable to be parsed: {file_path}")
+                logging.error(e)
 
         return slider_sets
 
-    def __populate_slider_set_groups(self, *, add_unassigned_group = True):
+    def __populate_slider_set_groups(self, *, add_unassigned_group:bool = True) -> None:
         for group in self.sliderGroups:
             for member in self.sliderGroups[group]:
                 if member.name in self.sliderSets:
@@ -276,7 +292,7 @@ class BodySlide:
         return output_sets
 
     def SliderSetsByOutput(self, slider_sets: dict[str, SliderSet] | None = None) -> dict[str, list[SliderSet]]:
-        output_groups = {}
+        output_groups = dict[str, list[SliderSet]]()
         slider_sets = self.sliderSets if slider_sets is None else slider_sets
         for slider_set in slider_sets.values():
             if slider_set.output.casefold() not in output_groups:
@@ -364,7 +380,7 @@ class BodySlide:
         return slider_sets_by_output
 
 
-    def create_slider_group(self, filename: str, name: str, members: list[str]):
+    def create_slider_group(self, filename: str, name: str, members: list[str]) -> None:
         filename = self.get_file('SliderGroups', filename, True)
 
         if os.path.exists(filename):
@@ -388,10 +404,10 @@ class BodySlide:
         ET.indent(tree, '    ')
         tree.write(filename, encoding='UTF-8', xml_declaration=True)
 
-    def __sort_by_output_then_name(self, e:SliderSet):
+    def __sort_by_output_then_name(self, e:SliderSet) -> tuple[str, str]:
         return (e.output, e.name)
 
-    def print_all_slider_set_details(self, *, include_sources = False, file=sys.stdout, sep = ' | ', group_sep = ', '):
+    def print_all_slider_set_details(self, *, include_sources:bool = False, file:TextIO=sys.stdout, sep:str = ' | ', group_sep:str = ', ') -> None:
         if include_sources:
             print("Output", "Name", "Source", "Groups [Group Sources]", file=file, sep=sep)
         else:

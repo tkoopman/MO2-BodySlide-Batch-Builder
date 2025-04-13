@@ -15,7 +15,7 @@ import mobase  # type: ignore
 from pathlib import PureWindowsPath
 from PyQt6 import QtCore, QtGui, QtWidgets
 from PyQt6.QtCore import QByteArray, QItemSelectionModel, QSettings, Qt
-from PyQt6.QtWidgets import QButtonGroup, QComboBox, QDialog, QDialogButtonBox, QHBoxLayout, QHeaderView, QLabel, QListWidget, QListWidgetItem, QMessageBox, QTableWidgetItem, QTreeWidgetItem, QWidget, QFileDialog
+from PyQt6.QtWidgets import QComboBox, QDialog, QDialogButtonBox, QHeaderView, QListWidget, QListWidgetItem, QMessageBox, QTableWidgetItem, QTreeWidgetItem, QWidget, QFileDialog
 
 from BSBB import Config
 from .BodySlide import MO2BodySlide, SliderSet, CaseInsensitive
@@ -340,7 +340,7 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
     #
     # Problem Window Stuff
     #
-    def __Ui_Problems_ItemChanged(self, item):
+    def __Ui_Problems_ItemChanged(self, item): # type: ignore
         if isinstance(item, QTreeWidgetItem):
             if item.checkState(0) == Qt.CheckState.Checked:
                 self.Ui_Problems.addButton.setEnabled(True)
@@ -936,6 +936,8 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
                     self.Ui_EditBuild.newButton.setEnabled(False)
                     self.Ui_EditBuild.applyAdvancedButton.setEnabled(False)
                     isValid = False
+            case _:
+                raise BaseException("Unknown type")
                     
         if isValid:
             self.Ui_EditBuild.valueLineEdit.setStyleSheet(None)
@@ -959,6 +961,8 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
                 sType = Config.IncludeType.CONTAINS
             case 4:
                 sType = Config.IncludeType.REGEX
+            case _:
+                raise BaseException("Unknown type entry")
 
         match self.Ui_EditBuild.useComboBox.currentIndex():
             case 0: # Group
@@ -971,6 +975,8 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
                 sUse = Config.IncludeUse.Include
             case 4:
                 sUse = Config.IncludeUse.Exclude
+            case _:
+                raise BaseException("Unknown use entry")
         
         self.__UI_EditBuild_UpdateInclude(addingNew=add, setType=sType, setUse=sUse, setName=self.Ui_EditBuild.valueLineEdit.text())
         self.__UI_EditBuild_SetAdvancedStates()
@@ -1007,6 +1013,8 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
                     self.Ui_EditBuild.useComboBox.setCurrentIndex(4)
                 case 1:
                     self.Ui_EditBuild.useComboBox.setCurrentIndex(3)
+                case _:
+                    pass
             return
 
         sType = Config.strToIncludeType(selection.text(_UI_EDITBUILD_TREE_COL_TYPE))
@@ -1116,6 +1124,8 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
                     groups = ', '.join(sliderSet.groups)
                     li.setToolTip(f"Member of {groups if groups else 'no groups'}")
                     self.Ui_EditBuild.sliderSetList.addItem(li)
+                case _:
+                    pass
 
         if addedGroup:
             self.Ui_EditBuild.groupList.sortItems()
@@ -1352,6 +1362,8 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
                 self.config.priorities = [Config.PriorityOrder.INCLUDEORDER, Config.PriorityOrder.BUILDSELECTION]
             case 2:
                 self.config.priorities = [Config.PriorityOrder.INCLUDEORDER]
+            case _:
+                raise BaseException("Unknown priority")
 
         self.config.onBuildCheckConflicts = self.Ui_Settings.onBuildCheckConflictsCheckBox.isChecked(
         )
