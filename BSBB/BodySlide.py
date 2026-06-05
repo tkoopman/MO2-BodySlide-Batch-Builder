@@ -163,7 +163,7 @@ class BodySlide:
         self,
         body_slide_dir: str,
         *,
-        get_file: Callable[[str | None, str, bool], str] | None = None,
+        get_file: Callable[[str | None, str, bool, bool], str | None] | None = None,
         get_files: Callable[[str, str], list[str] | Sequence[str]] | None = None,
     ):
         if get_file is None:
@@ -186,7 +186,9 @@ class BodySlide:
         self.sliderSets = self._read_slider_sets()
         self.__populate_slider_set_groups()
 
-    def __get_file(self, folder: str | None, filename: str, create: bool) -> str:
+    # Default GetFile implementation that just looks in the file system. MO2BodySlide overrides this to use the MO2 file system.
+    # As such this does not implement the create or throwIfNotFound functionality as MO2BodySlide needs to be able to control that behavior.
+    def __get_file(self, folder: str | None, filename: str, create: bool, throwIfNotFound: bool) -> str | None:
         path = (
             self._body_slide_dir
             if folder is None
@@ -257,10 +259,10 @@ class BodySlide:
         return group_members
 
     def _read_buildselection_xml(self) -> dict[str, str]:
-        file_path = self.get_file(None, "BuildSelection.xml", False)
+        file_path = self.get_file(None, "BuildSelection.xml", False, False)
         output = dict[str, str]()
 
-        if not os.path.exists(file_path):
+        if file_path is None or not os.path.exists(file_path):
             return output
         try:
             tree = ET.parse(file_path)
@@ -484,7 +486,7 @@ class BodySlide:
         return slider_sets_by_output
 
     def create_slider_group(self, filename: str, name: str, members: list[str]) -> None:
-        filename = self.get_file("SliderGroups", filename, True)
+        filename = self.get_file("SliderGroups", filename, True, True)
 
         if os.path.exists(filename):
             tree = ET.parse(filename)
@@ -574,8 +576,13 @@ class MO2BodySlide(BodySlide):
         )
         self.__organizer = organizer
         self.CreateFilePath = organizer.overwritePath()
+        x64 = self.__get_file(None, "BodySlide x64.exe", False, False)
+        if x64 is None:
+            self.DefaultExecutable = "BodySlide"
+        else:
+            self.DefaultExecutable = "BodySlide x64"
 
-    def __get_file(self, folder: str | None, filename: str, create: bool) -> str:
+    def __get_file(self, folder: str | None, filename: str, create: bool, throwIfNotFound: bool) -> str | None:
         path = (
             self._body_slide_dir
             if folder is None
@@ -586,7 +593,10 @@ class MO2BodySlide(BodySlide):
             return files[-1]
 
         if not create:
-            raise FileNotFoundError(f"Unable to find {filename}")
+            if throwIfNotFound:
+                raise FileNotFoundError(f"Unable to find {filename}")
+
+            return None
 
         path = os.path.join(self.CreateFilePath, path)
         if not os.path.isdir(path):

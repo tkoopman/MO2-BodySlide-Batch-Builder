@@ -1,4 +1,4 @@
-# Form implementation generated from reading ui file 'UI\Settings.ui'
+# Form implementation generated from reading ui file '.\UI\Settings.ui'
 #
 # Created by: PyQt6 UI code generator 6.8.1
 #
@@ -80,6 +80,12 @@ class Ui_Settings(object):
         self.priorityComboBox.addItem("")
         self.priorityComboBox.addItem("")
         self.formLayout.setWidget(1, QtWidgets.QFormLayout.ItemRole.FieldRole, self.priorityComboBox)
+        self.executableLabel = QtWidgets.QLabel(parent=self.settingsTab)
+        self.executableLabel.setObjectName("executableLabel")
+        self.formLayout.setWidget(7, QtWidgets.QFormLayout.ItemRole.LabelRole, self.executableLabel)
+        self.executableLineEdit = QtWidgets.QLineEdit(parent=self.settingsTab)
+        self.executableLineEdit.setObjectName("executableLineEdit")
+        self.formLayout.setWidget(7, QtWidgets.QFormLayout.ItemRole.FieldRole, self.executableLineEdit)
         self.verticalLayout_2.addLayout(self.formLayout)
         self.tabWidget.addTab(self.settingsTab, "")
         self.toolsTab = QtWidgets.QWidget()
@@ -158,6 +164,9 @@ class Ui_Settings(object):
         self.priorityComboBox.setItemText(0, _translate("Settings", "Before include order"))
         self.priorityComboBox.setItemText(1, _translate("Settings", "After include order"))
         self.priorityComboBox.setItemText(2, _translate("Settings", "Never"))
+        self.executableLabel.setText(_translate("Settings", "Executable:"))
+        self.executableLineEdit.setToolTip(_translate("Settings", "This should match the MO2 definied Executable \"Title\" for BodySlide. For BodySlide 5.8+ normally \"BodySlide\". For <5.8 normally \"BodySlide x64\""))
+        self.executableLineEdit.setPlaceholderText(_translate("Settings", "BodySlide"))
         self.tabWidget.setTabText(self.tabWidget.indexOf(self.settingsTab), _translate("Settings", "Settings"))
         self.exportDataButton.setText(_translate("Settings", "Export Data"))
         self.label_2.setText(_translate("Settings", "Locate BodySlide Batch Builder config file"))

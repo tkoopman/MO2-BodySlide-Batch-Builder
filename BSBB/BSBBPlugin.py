@@ -71,7 +71,7 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
         return f"Run BodySlide build for each configured build that includes different Groups, Preset, Output Mod combinations."
 
     def version(self) -> mobase.VersionInfo:
-        return mobase.VersionInfo(1, 1, 0)
+        return mobase.VersionInfo(2, 2, 0)
 
     def isActive(self) -> mobase.MoVariant:
         return self.__organizer.pluginSetting(self.name(), "enabled")
@@ -92,12 +92,12 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
     # General stuff
     #
 
-    def __loadConfig(self):
+    def __loadConfig(self, defaultExecutable: str):
         self.__unsaved_changes = False
         file_path = os.path.join(
             self.__organizer.getPluginDataPath(), "bsbb_config.xml"
         )
-        self.config, self.builds = Config.loadConfig(file_path)
+        self.config, self.builds = Config.loadConfig(file_path, defaultExecutable)
         self.uiconfig = QSettings(
             os.path.join(self.__organizer.getPluginDataPath(), "bsbb_config.ini"),
             QSettings.Format.IniFormat,
@@ -451,7 +451,7 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
 
         self.BodySlide = MO2BodySlide(self.__organizer)
         self.BodySlide.load_configs(exclude_slide_group_files=["BSBB_Groups.xml"])
-        self.__loadConfig()
+        self.__loadConfig(self.BodySlide.DefaultExecutable)
 
         self.Ui_BSBB_Dialog = VerifyCloseDialog(self.__parentWidget, self)
         self.Ui_BSBB = Ui_BSBB()
@@ -663,27 +663,27 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
                     "--trimorphs",
                 ]
             )
-            exe = self.__organizer.startApplication("BodySlide x64", args=args)
+            exe = self.__organizer.startApplication(self.config.executable, args=args)
             if exe == mobase.INVALID_HANDLE_VALUE:
 
                 self.__displayMessage(
                     QMessageBox.Icon.Critical,
                     title="Error running BodySlide",
-                    text='Make sure BodySlide is registered as an executable (Ctrl+E) with the name "BodySlide x64"',
+                    text=f'Make sure BodySlide is registered as an executable (Ctrl+E) with the name "{self.config.executable}"',
                 )
                 return
 
             waitResult, exitCode = self.__organizer.waitForApplication(exe, False)
             if not waitResult:
-                logging.warning("BodySlide x64 execution canceled")
+                logging.warning(f"{self.config.executable} execution canceled")
                 return
 
             if exitCode != 0:
-                logging.error(f"BodySlide x64 exit code: {exitCode}")
+                logging.error(f"{self.config.executable} exit code: {exitCode}")
                 self.__displayMessage(
                     QMessageBox.Icon.Critical,
                     title="Error running BodySlide",
-                    text=f"Error code {exitCode} returned by BodySlide x64",
+                    text=f"Error code {exitCode} returned by {self.config.executable}",
                 )
                 return
 
@@ -1669,6 +1669,8 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
         self.__addOutputsToComboBox(
             self.Ui_Settings.outputComboBox, value=self.config.output
         )
+        
+        self.Ui_Settings.executableLineEdit.setText(self.config.executable)
 
         self.Ui_Settings_Dialog.show()
 
@@ -1704,6 +1706,7 @@ class BSBBPlugin(mobase.IPluginTool, MyCloseEvent):
         self.config.autoClose = self.Ui_Settings.autoCloseCheckBox.isChecked()
         self.config.showSources = self.Ui_Settings.showSourcesCheckBox.isChecked()
         self.config.output = self.Ui_Settings.outputComboBox.currentText()
+        self.config.executable = self.Ui_Settings.executableLineEdit.text()
 
     def __Ui_Settings_ExportData(self):
         fileName = QFileDialog.getSaveFileName(

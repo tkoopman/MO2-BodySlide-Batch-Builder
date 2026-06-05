@@ -161,6 +161,23 @@
            </item>
           </widget>
          </item>
+         <item row="7" column="0">
+          <widget class="QLabel" name="executableLabel">
+           <property name="text">
+            <string>Executable:</string>
+           </property>
+          </widget>
+         </item>
+         <item row="7" column="1">
+          <widget class="QLineEdit" name="executableLineEdit">
+           <property name="toolTip">
+            <string>This should match the MO2 definied Executable &quot;Title&quot; for BodySlide. For BodySlide 5.8+ normally &quot;BodySlide&quot;. For &lt;5.8 normally &quot;BodySlide x64&quot;</string>
+           </property>
+           <property name="placeholderText">
+            <string>BodySlide</string>
+           </property>
+          </widget>
+         </item>
         </layout>
        </item>
       </layout>

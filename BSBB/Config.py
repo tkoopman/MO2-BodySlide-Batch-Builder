@@ -181,6 +181,7 @@ class Global(Output):
         autoClose: bool,
         showSources: bool,
         output: str,
+        executable: str,
     ):
         super().__init__(output)
         self.deleteMeshes = deleteMeshes
@@ -189,6 +190,7 @@ class Global(Output):
         self.onBuildCheckIgnored = onBuildCheckIgnored
         self.autoClose = autoClose
         self.showSources = showSources
+        self.executable = executable
 
 
 def convertToBool(value: Any, *, default: bool = False) -> bool:
@@ -280,7 +282,7 @@ def strToIncludeUse(itemUse: str | None) -> IncludeUse:
             return IncludeUse.IncludeKeep
 
 
-def loadConfig(file_path: str) -> tuple[Global, list[Build]]:
+def loadConfig(file_path: str, defaultExecutable: str) -> tuple[Global, list[Build]]:
     builds = list[Build]()
     config = Global(
         deleteMeshes=False,
@@ -290,6 +292,7 @@ def loadConfig(file_path: str) -> tuple[Global, list[Build]]:
         autoClose=True,
         showSources=False,
         output="Output - BodySlide",
+        executable=defaultExecutable,
     )
 
     if not os.path.exists(file_path):
@@ -319,6 +322,7 @@ def loadConfig(file_path: str) -> tuple[Global, list[Build]]:
         )
         return config, builds
 
+    # Config file exists, try to read it in.
     tree = ET.parse(file_path)
     root = tree.getroot()
 
@@ -341,7 +345,11 @@ def loadConfig(file_path: str) -> tuple[Global, list[Build]]:
                 case "showSources":
                     config.showSources = convertToBool(value)
                 case "output":
-                    config.output = value
+                    if value:
+                        config.output = value
+                case "executable":
+                    if value:
+                        config.executable = value
                 case _:
                     logging.warning(
                         f"Unknown setting found in config: {name}. Will be removed on next save."
@@ -404,6 +412,9 @@ def saveConfig(globalConfig: Global, builds: list[Build], file_path: str):
     )
     config.append(
         ET.Element("Setting", name="showSources", value=str(globalConfig.showSources))
+    )
+    config.append(
+        ET.Element("Setting", name="executable", value=globalConfig.executable)
     )
     config.append(ET.Element("Setting", name="output", value=globalConfig.output))
 
