@@ -112,6 +112,24 @@
       "ReleaseNotes": [
         "Added error handling when reading BodySlide files"
       ]
+    },
+    {
+      "Version": "2.2.0",
+      "Released": "2026-06-06",
+      "MinSupport": "2.4.2",
+      "MaxSupport": "2.4.2",
+      "MinWorking": "2.4.0",
+      "MaxWorking": "",
+      "DownloadUrl": "https://github.com/tkoopman/MO2-BodySlide-Batch-Builder/archive/refs/tags/v2.2.0.zip",
+      "PluginPath": [
+        "MO2-BodySlide-Batch-Builder-2.2.0/BSBB/"
+      ],
+      "LocalePath": [],
+      "DataPath": [ "data/BSBB_Config.xml", "data/BSBB_Config.ini" ],
+      "ReleaseNotes": [
+        "Added setting for BodySlide executable.",
+        "Fixed bug if BuildSelection.xml doesn't exist"
+      ]
     }
   ]
 }
